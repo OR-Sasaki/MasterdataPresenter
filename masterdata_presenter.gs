@@ -1,3 +1,12 @@
+/*!
+ * MasterPresenter
+ *
+ * Copyright (c) 2023 OR-Sasaki
+ *
+ * Released under the MIT license.
+ * see https://opensource.org/licenses/MIT
+ */
+
 // ================== Setting =======================
 // ディレクトリ設定
 const useDirectory = true
@@ -44,7 +53,7 @@ function convertCsv()
 }
 
 
-// ================== Git =======================
+// ================== GitHub =======================
 
 function doCommit(contents)
 {
