@@ -45,7 +45,7 @@ function doCommit()
   var refSha = getRefSha()
   var commit = getCommit(refSha)
   var blobSha = getBlobSha("hogehoge")
-
+  createTree(commit["tree"]["sha"], blobSha)
 }
 
 function getRefSha()
@@ -61,6 +61,7 @@ function getCommit(sha)
   var requestUrl = urlBase + "git/commits/" + sha
   var commit = fetchGet(requestUrl)
   Logger.log("getCommit: " + commit)
+  return(commit)
 }
 
 function getBlobSha(content)
@@ -74,19 +75,27 @@ function getBlobSha(content)
   return(sha)
 }
 
-function getTree()
+function createTree(treeSha, blobSha)
 {
-  
-}
-
-function createTree()
-{
-
+  var requestUrl = urlBase + "git/trees"
+  var payload = {
+    "base_tree": treeSha,
+    "tree": [
+      {
+        "path": "content.txt",
+        "mode": "100644",
+        "type": "blob",
+        "sha": blobSha
+      }
+    ]
+  }
+  var tree = fetchPost(requestUrl, payload)
+  Logger.log(tree)
 }
 
 function createCommit()
 {
-
+ 
 }
 
 function updateRef()
