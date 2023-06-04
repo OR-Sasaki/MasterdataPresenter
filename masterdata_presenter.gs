@@ -1,36 +1,50 @@
+// ================== Setting =======================
+// ディレクトリ設定
+const useDirectory = true
+const directoryName = "csv"
+
+// 削除する行設定
+const doSplice = true
+const spliceStartAt = 1
+const spliceEndAt = 2
+
+// ブランチ設定
+const branchName = "main"
+
+// ================== Add menu =======================
+
 function onOpen() {
   const customMenu = SpreadsheetApp.getUi()
-  customMenu.createMenu('カスタムメニュー')　//メニューバーに表示するカスタムメニュー名
-      .addItem('追加メニューアイテム1', 'functionName')　//メニューアイテムを追加
+  customMenu.createMenu('マスタインポート')
+      .addItem('実行', 'convertCsv')
       .addToUi()
 }
+
+
+// ================== CSV =======================
 
 function convertCsv()
 {
   var spreadSheet = SpreadsheetApp.getActiveSpreadsheet()
   var sheets = spreadSheet.getSheets()
+  var contents = []
+  
   sheets.forEach(function(sheet){
-    Logger.log(sheet.getDataRange().getValues().join('\n'))
+    var values = sheet.getDataRange().getValues()
+    if (doSplice) {
+      values.splice(spliceStartAt,spliceEndAt)
+    }
+    contents.push({
+      "text": values.join('\n'),
+      "name": sheet.getName()
+    })
   })
+
+  doCommit(contents)
 }
 
-function commitCsv()
-{
-  doCommit(
-    [
-      {
-      "text": "hogehoge",
-      "name": "wowname"
-      },
-      {
-      "text": "hogehogde",
-      "name": "o2o2o2"
-      }
-    ],
-  )
-}
 
-// ================== Git Base =======================
+// ================== Git =======================
 
 function doCommit(contents)
 {
@@ -52,7 +66,7 @@ function doCommit(contents)
 
 function getRefSha()
 {
-  var requestUrl = urlBase + "git/refs/heads/main"
+  var requestUrl = urlBase + "git/refs/heads/" + branchName
   var sha = fetchGet(requestUrl)["object"]["sha"]
   Logger.log("getRefSha: " + sha)
   return(sha)
@@ -84,10 +98,13 @@ function createTree(treeSha, contents)
     "base_tree": treeSha,
     "tree": []
   }
+
+  var rootPath = useDirectory ? (directoryName + "/") : ""
+
   contents.forEach(function(content){
     payload["tree"].push(
       {
-        "path": content["name"] + ".csv",
+        "path": rootPath + content["name"] + ".csv",
         "mode": "100644",
         "type": "blob",
         "sha": content["blobSha"]
@@ -105,7 +122,7 @@ function createCommit(parentCommitSha, treeSha)
   var requestUrl = urlBase + "git/commits"
   var userEmail = Session.getActiveUser().getEmail()
   var payload = {
-    "message": "Import MasterData on " + Date.now,
+    "message": "Import MasterData on " + Utilities.formatDate(new Date(), 'JST', 'yyyy-MM-dd  HH:mm:ss'),
     "author": {
       "name": userEmail,
       "email": userEmail,
@@ -123,7 +140,7 @@ function createCommit(parentCommitSha, treeSha)
 
 function updateRef(commitSha)
 {
-  var requestUrl = urlBase + "git/refs/heads/main"
+  var requestUrl = urlBase + "git/refs/heads/" + branchName
   var payload = {
     "sha": commitSha,
     "force": false
